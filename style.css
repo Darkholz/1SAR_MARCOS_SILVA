@@ -1,0 +1,369 @@
+:root{
+  --sky-top:#81c9ff;
+  --sky-bottom:#dff7ff;
+  --water-top:#6fc7df;
+  --water-bottom:#1f7e9f;
+  --lily-main:#63b247;
+  --lily-dark:#3b7d29;
+  --tongue:#ef6d78;
+  --cloud:rgba(255,255,255,0.78);
+  --rain:rgba(210,235,255,0.95);
+  --fog:rgba(255,255,255,0.45);
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+body{
+  background:#bfe3ff;
+}
+
+.scene{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 55%, #d6f8ff 100%);
+}
+
+.sky{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 72% 18%, rgba(255,245,171,0.60), transparent 16%),
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,0.18), transparent 24%);
+}
+
+.scene.night{
+  --sky-top:#10233f;
+  --sky-bottom:#395c88;
+  --water-top:#355f89;
+  --water-bottom:#163c57;
+}
+.scene.night .sky{
+  background:
+    radial-gradient(circle at 75% 18%, rgba(255,255,255,0.12), transparent 16%),
+    radial-gradient(circle at 20% 15%, rgba(255,255,255,0.08), transparent 24%);
+}
+.scene.weather-overcast{
+  --sky-top:#9fb0bf;
+  --sky-bottom:#d4dde5;
+}
+.scene.weather-fog{
+  --sky-top:#b8c5d0;
+  --sky-bottom:#dde5ea;
+}
+.scene.weather-rain,
+.scene.weather-thunder{
+  --sky-top:#6c8194;
+  --sky-bottom:#b2c0cc;
+}
+.scene.weather-snow{
+  --sky-top:#c2d2df;
+  --sky-bottom:#eaf3f8;
+}
+
+.sun-moon{
+  position:absolute;
+  right:7vw;
+  top:7vh;
+  width:clamp(76px, 9vw, 130px);
+  aspect-ratio:1;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff9d7 0%, #ffe58f 55%, #ffd15a 100%);
+  box-shadow:0 0 60px rgba(255,221,123,0.7);
+  transition:all .5s ease;
+}
+.scene.night .sun-moon{
+  background:radial-gradient(circle at 35% 35%, #f8f8ff 0%, #dfe7ff 55%, #bcc8ea 100%);
+  box-shadow:0 0 45px rgba(220,230,255,0.35);
+}
+.scene.weather-overcast .sun-moon,
+.scene.weather-fog .sun-moon,
+.scene.weather-rain .sun-moon,
+.scene.weather-thunder .sun-moon{
+  opacity:.3;
+}
+
+.clouds{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.cloud{
+  position:absolute;
+  height:48px;
+  border-radius:999px;
+  background:var(--cloud);
+  filter:blur(.2px);
+  opacity:.92;
+  animation:cloudFloat linear infinite;
+}
+.cloud::before,
+.cloud::after{
+  content:"";
+  position:absolute;
+  background:inherit;
+  border-radius:50%;
+}
+.cloud-a{
+  width:180px; left:8vw; top:11vh; animation-duration:26s;
+}
+.cloud-a::before{width:58px;height:58px;left:20px;top:-20px;}
+.cloud-a::after{width:74px;height:74px;left:82px;top:-30px;}
+
+.cloud-b{
+  width:210px; left:43vw; top:18vh; animation-duration:32s;
+}
+.cloud-b::before{width:64px;height:64px;left:32px;top:-18px;}
+.cloud-b::after{width:84px;height:84px;left:100px;top:-34px;}
+
+.cloud-c{
+  width:150px; left:76vw; top:14vh; animation-duration:24s;
+}
+.cloud-c::before{width:50px;height:50px;left:18px;top:-16px;}
+.cloud-c::after{width:66px;height:66px;left:68px;top:-24px;}
+
+@keyframes cloudFloat{
+  0%{ transform:translateX(0); }
+  50%{ transform:translateX(26px); }
+  100%{ transform:translateX(0); }
+}
+
+.scene.weather-clear .clouds{ opacity:.35; }
+.scene.weather-partly .clouds{ opacity:.65; }
+.scene.weather-overcast .clouds,
+.scene.weather-fog .clouds,
+.scene.weather-rain .clouds,
+.scene.weather-thunder .clouds,
+.scene.weather-snow .clouds{ opacity:1; }
+
+.fog{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .5s ease;
+}
+.fog span{
+  position:absolute;
+  left:-10%;
+  width:120%;
+  height:22%;
+  border-radius:50%;
+  background:var(--fog);
+  filter:blur(18px);
+  animation:fogMove 12s ease-in-out infinite;
+}
+.fog span:nth-child(1){ top:24%; }
+.fog span:nth-child(2){ top:46%; animation-duration:15s; }
+.fog span:nth-child(3){ top:64%; animation-duration:18s; }
+.scene.weather-fog .fog{ opacity:1; }
+
+@keyframes fogMove{
+  0%,100%{ transform:translateX(0); }
+  50%{ transform:translateX(-36px); }
+}
+
+.rain,
+.snow{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .4s ease;
+}
+.scene.weather-rain .rain,
+.scene.weather-thunder .rain{
+  opacity:1;
+}
+.scene.weather-snow .snow{
+  opacity:1;
+}
+
+.drop, .flake{
+  position:absolute;
+  top:-10%;
+  will-change:transform, opacity;
+}
+.drop{
+  width:2px;
+  height:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,0), var(--rain));
+  opacity:.9;
+  animation:rainFall linear infinite;
+}
+@keyframes rainFall{
+  from{ transform:translate3d(0,-10vh,0) rotate(12deg); }
+  to{ transform:translate3d(-8vw,120vh,0) rotate(12deg); }
+}
+
+.flake{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.95);
+  filter:blur(.2px);
+  animation:snowFall linear infinite;
+}
+@keyframes snowFall{
+  from{ transform:translate3d(0,-10vh,0); }
+  to{ transform:translate3d(5vw,115vh,0); }
+}
+
+.lightning{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,0.6);
+  opacity:0;
+  pointer-events:none;
+}
+.lightning.flash{
+  animation:flash .35s ease;
+}
+@keyframes flash{
+  0%,100%{ opacity:0; }
+  12%{ opacity:.9; }
+  24%{ opacity:.18; }
+  36%{ opacity:.7; }
+}
+
+.lake{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:46vh;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.20), transparent 10%),
+    linear-gradient(180deg, var(--water-top) 0%, var(--water-bottom) 100%);
+}
+.ripples{
+  position:absolute;
+  left:-10%;
+  width:120%;
+  border:2px solid rgba(255,255,255,0.18);
+  border-radius:50%;
+  animation:waterMove ease-in-out infinite;
+}
+.ripple-1{ bottom:12%; height:56px; animation-duration:6.5s; }
+.ripple-2{ bottom:24%; height:44px; animation-duration:7.2s; }
+.ripple-3{ bottom:34%; height:34px; animation-duration:8s; }
+.ripple-4{ bottom:5%; height:62px; animation-duration:7s; }
+@keyframes waterMove{
+  0%,100%{ transform:translateX(0) scaleX(1); }
+  50%{ transform:translateX(-22px) scaleX(1.03); }
+}
+
+.lilypad{
+  position:absolute;
+  left:50%;
+  bottom:11.5vh;
+  transform:translateX(-50%) rotate(-5deg);
+  width:min(42vw, 500px);
+  aspect-ratio:1.45;
+  background:
+    radial-gradient(circle at 38% 34%, #92df70 0%, var(--lily-main) 52%, var(--lily-dark) 100%);
+  border-radius:48% 52% 45% 55% / 52% 47% 53% 48%;
+  box-shadow:0 26px 40px rgba(0,0,0,0.18);
+}
+.lilypad::before{
+  content:"";
+  position:absolute;
+  left:52%;
+  top:8%;
+  width:4px;
+  height:74%;
+  background:rgba(255,255,255,0.24);
+  transform:rotate(30deg);
+  border-radius:999px;
+}
+.lilypad::after{
+  content:"";
+  position:absolute;
+  left:41%;
+  top:48%;
+  width:24%;
+  height:3px;
+  background:rgba(255,255,255,0.18);
+  transform:rotate(5deg);
+  border-radius:999px;
+}
+
+.frog-zone{
+  position:absolute;
+  left:50%;
+  bottom:16vh;
+  transform:translateX(-50%);
+  width:min(32vw, 420px);
+  height:min(22vw, 260px);
+}
+.frog{
+  position:absolute;
+  bottom:0;
+  left:50%;
+  width:min(32vw, 420px);
+  transform:translateX(-50%);
+  transform-origin:center bottom;
+  filter:drop-shadow(0 14px 18px rgba(0,0,0,0.24));
+  animation:frogBreath 4.2s ease-in-out infinite;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+@keyframes frogBreath{
+  0%,100%{ transform:translateX(-50%) translateY(0) scale(1); }
+  50%{ transform:translateX(-50%) translateY(-2px) scale(1.01); }
+}
+
+.fly{
+  position:absolute;
+  width:clamp(48px, 5vw, 64px);
+  height:auto;
+  left:-120px;
+  top:16vh;
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,0.20));
+  will-change:left, top, transform, opacity;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+
+.tongue{
+  position:absolute;
+  left:52%;
+  top:58%;
+  width:10px;
+  height:8px;
+  background:linear-gradient(90deg, #d85c67 0%, var(--tongue) 100%);
+  border-radius:999px;
+  transform-origin:left center;
+  opacity:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.16);
+}
+.tongue::after{
+  content:"";
+  position:absolute;
+  right:-9px;
+  top:50%;
+  width:16px;
+  height:14px;
+  background:#ff8c96;
+  border-radius:50%;
+  transform:translateY(-50%);
+}
+
+@media (max-width: 900px){
+  .lilypad{ width:min(56vw, 430px); bottom:15vh; }
+  .frog-zone{ width:min(44vw, 320px); height:min(28vw, 210px); bottom:19vh; }
+  .frog{ width:min(44vw, 320px); }
+}
+@media (max-width: 640px){
+  .lilypad{ width:76vw; bottom:18vh; }
+  .frog-zone{ width:62vw; height:38vw; bottom:23vh; }
+  .frog{ width:62vw; }
+  .fly{ width:46px; }
+}
