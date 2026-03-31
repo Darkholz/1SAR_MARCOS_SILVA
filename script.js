@@ -118,8 +118,8 @@ async function applyLiveWeather() {
 
 function getMouthPoint() {
   return {
-    x: window.innerWidth * 0.515,
-    y: window.innerHeight * 0.56
+    x: window.innerWidth * 0.505,
+    y: window.innerHeight * 0.67
   };
 }
 
