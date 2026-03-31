@@ -1,6 +1,5 @@
 const scene = document.getElementById('scene');
 const frog = document.getElementById('frog');
-const frogZone = document.getElementById('frogZone');
 const fly = document.getElementById('fly');
 const tongue = document.getElementById('tongue');
 const rain = document.getElementById('rain');
@@ -10,15 +9,18 @@ const lightning = document.getElementById('lightning');
 let flyX = -140;
 let flyY = window.innerHeight * 0.22;
 let phase = Math.random() * Math.PI * 2;
-let eating = false;
 
-function random(min, max){
+let eating = false;
+let flyCaught = false;
+let catchProgress = 0;
+
+function random(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-function buildRain(count){
+function buildRain(count) {
   rain.innerHTML = '';
-  for(let i = 0; i < count; i++){
+  for (let i = 0; i < count; i++) {
     const d = document.createElement('span');
     d.className = 'drop';
     d.style.left = `${Math.random() * 100}%`;
@@ -29,9 +31,9 @@ function buildRain(count){
   }
 }
 
-function buildSnow(count){
+function buildSnow(count) {
   snow.innerHTML = '';
-  for(let i = 0; i < count; i++){
+  for (let i = 0; i < count; i++) {
     const f = document.createElement('span');
     f.className = 'flake';
     f.style.left = `${Math.random() * 100}%`;
@@ -46,20 +48,21 @@ function buildSnow(count){
 buildRain(90);
 buildSnow(42);
 
-function weatherClassFromCode(code){
+function weatherClassFromCode(code) {
   if (code === 0) return 'weather-clear';
-  if ([1,2].includes(code)) return 'weather-partly';
+  if ([1, 2].includes(code)) return 'weather-partly';
   if (code === 3) return 'weather-overcast';
-  if ([45,48].includes(code)) return 'weather-fog';
-  if ([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code)) return 'weather-rain';
-  if ([71,73,75,77,85,86].includes(code)) return 'weather-snow';
-  if ([95,96,99].includes(code)) return 'weather-thunder';
+  if ([45, 48].includes(code)) return 'weather-fog';
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'weather-rain';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'weather-snow';
+  if ([95, 96, 99].includes(code)) return 'weather-thunder';
   return 'weather-partly';
 }
 
-async function applyLiveWeather(){
-  try{
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&timezone=Europe%2FLisbon';
+async function applyLiveWeather() {
+  try {
+    const url =
+      'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&timezone=Europe%2FLisbon';
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
 
@@ -70,29 +73,35 @@ async function applyLiveWeather(){
     const isDay = Number(current.is_day) === 1;
 
     scene.classList.remove(
-      'weather-clear','weather-partly','weather-overcast',
-      'weather-fog','weather-rain','weather-snow','weather-thunder',
-      'day','night'
+      'weather-clear',
+      'weather-partly',
+      'weather-overcast',
+      'weather-fog',
+      'weather-rain',
+      'weather-snow',
+      'weather-thunder',
+      'day',
+      'night'
     );
 
     scene.classList.add(weatherClass);
     scene.classList.add(isDay ? 'day' : 'night');
 
-    if (weatherClass === 'weather-thunder'){
+    if (weatherClass === 'weather-thunder') {
       setInterval(() => {
-        if (Math.random() < 0.35){
+        if (Math.random() < 0.35) {
           lightning.classList.remove('flash');
           void lightning.offsetWidth;
           lightning.classList.add('flash');
         }
       }, 3500);
     }
-  }catch(e){
-    scene.classList.add('weather-partly','day');
+  } catch (e) {
+    scene.classList.add('weather-partly', 'day');
   }
 }
 
-function blink(){
+function blink() {
   frog.style.filter = 'drop-shadow(0 14px 18px rgba(0,0,0,0.24)) brightness(0.985)';
   setTimeout(() => {
     frog.style.filter = 'drop-shadow(0 14px 18px rgba(0,0,0,0.24)) brightness(0.92)';
@@ -102,7 +111,7 @@ function blink(){
   }, 150);
 }
 
-function scheduleBlink(){
+function scheduleBlink() {
   const next = 1800 + Math.random() * 3200;
   setTimeout(() => {
     blink();
@@ -110,7 +119,7 @@ function scheduleBlink(){
   }, next);
 }
 
-function mouthPoint(){
+function mouthPoint() {
   const rect = frog.getBoundingClientRect();
   return {
     x: rect.left + rect.width * 0.73,
@@ -118,9 +127,10 @@ function mouthPoint(){
   };
 }
 
-function extendTongue(targetX, targetY){
+function setTongueToPoint(targetX, targetY) {
   const sceneRect = scene.getBoundingClientRect();
   const mouth = mouthPoint();
+
   const x1 = mouth.x - sceneRect.left;
   const y1 = mouth.y - sceneRect.top;
   const x2 = targetX - sceneRect.left;
@@ -128,7 +138,7 @@ function extendTongue(targetX, targetY){
 
   const dx = x2 - x1;
   const dy = y2 - y1;
-  const len = Math.sqrt(dx*dx + dy*dy);
+  const len = Math.sqrt(dx * dx + dy * dy);
   const ang = Math.atan2(dy, dx) * 180 / Math.PI;
 
   tongue.style.left = `${x1}px`;
@@ -138,71 +148,105 @@ function extendTongue(targetX, targetY){
   tongue.style.opacity = '1';
 }
 
-function hideTongue(){
+function hideTongue() {
   tongue.style.opacity = '0';
   tongue.style.width = '10px';
 }
 
-function eatFly(){
-  if (eating) return;
+function resetFly() {
+  flyCaught = false;
+  catchProgress = 0;
+  flyX = -140;
+  flyY = window.innerHeight * random(0.14, 0.34);
+  phase = Math.random() * Math.PI * 2;
+  fly.style.opacity = '1';
+  fly.style.transform = 'rotate(0deg) scale(1)';
+}
+
+function eatFly() {
+  if (eating || flyCaught) return;
+
   eating = true;
+  flyCaught = true;
+  catchProgress = 0;
+}
 
-  const fr = fly.getBoundingClientRect();
-  const tx = fr.left + fr.width * 0.48;
-  const ty = fr.top + fr.height * 0.55;
+function animateCaughtFly() {
+  const mouth = mouthPoint();
 
-  extendTongue(tx, ty);
+  const flyCenterX = flyX + fly.offsetWidth * 0.48;
+  const flyCenterY = flyY + fly.offsetHeight * 0.55;
 
-  setTimeout(() => {
+  const dx = mouth.x - flyCenterX;
+  const dy = mouth.y - flyCenterY;
+
+  flyX += dx * 0.22;
+  flyY += dy * 0.22;
+  catchProgress += 0.08;
+
+  const currentCenterX = flyX + fly.offsetWidth * 0.48;
+  const currentCenterY = flyY + fly.offsetHeight * 0.55;
+
+  setTongueToPoint(currentCenterX, currentCenterY);
+
+  const scale = Math.max(0.15, 1 - catchProgress * 0.75);
+  const tilt = Math.sin(catchProgress * 18) * 12;
+
+  fly.style.left = `${flyX}px`;
+  fly.style.top = `${flyY}px`;
+  fly.style.transform = `rotate(${tilt}deg) scale(${scale})`;
+
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < 12) {
     fly.style.opacity = '0';
-    fly.style.transform = 'scale(0.15) rotate(8deg)';
-  }, 80);
-
-  setTimeout(() => {
     hideTongue();
+
+    setTimeout(() => {
+      resetFly();
+      eating = false;
+    }, 500);
+  }
+}
+
+function animateFly() {
+  if (flyCaught) {
+    animateCaughtFly();
+    requestAnimationFrame(animateFly);
+    return;
+  }
+
+  const speed = Math.max(1.35, window.innerWidth / 720);
+  flyX += speed;
+  phase += 0.05;
+
+  const arc = Math.sin(phase) * 26 + Math.sin(phase * 0.37) * 18;
+  flyY += arc * 0.05;
+
+  const minY = window.innerHeight * 0.12;
+  const maxY = window.innerHeight * 0.43;
+  flyY = Math.max(minY, Math.min(maxY, flyY));
+
+  if (flyX > window.innerWidth + 120) {
     flyX = -140;
     flyY = window.innerHeight * random(0.14, 0.34);
     phase = Math.random() * Math.PI * 2;
-    fly.style.opacity = '1';
-    fly.style.transform = 'rotate(0deg)';
-    eating = false;
-  }, 520);
-}
+  }
 
-function animateFly(){
-  if (!eating){
-    const speed = Math.max(1.35, window.innerWidth / 720);
-    flyX += speed;
-    phase += 0.05;
+  const tilt = Math.sin(phase * 4.5) * 9;
+  const flutter = 1 + Math.sin(phase * 8) * 0.04;
 
-    const arc = Math.sin(phase) * 26 + Math.sin(phase * 0.37) * 18;
-    flyY += arc * 0.05;
+  fly.style.left = `${flyX}px`;
+  fly.style.top = `${flyY}px`;
+  fly.style.transform = `rotate(${tilt}deg) scale(${flutter})`;
 
-    const minY = window.innerHeight * 0.12;
-    const maxY = window.innerHeight * 0.43;
-    flyY = Math.max(minY, Math.min(maxY, flyY));
+  const mouth = mouthPoint();
+  const dx = (flyX + fly.offsetWidth * 0.48) - mouth.x;
+  const dy = (flyY + fly.offsetHeight * 0.55) - mouth.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
-    if (flyX > window.innerWidth + 120){
-      flyX = -140;
-      flyY = window.innerHeight * random(0.14, 0.34);
-      phase = Math.random() * Math.PI * 2;
-    }
-
-    const tilt = Math.sin(phase * 4.5) * 9;
-    const flutter = 1 + Math.sin(phase * 8) * 0.04;
-
-    fly.style.left = `${flyX}px`;
-    fly.style.top = `${flyY}px`;
-    fly.style.transform = `rotate(${tilt}deg) scale(${flutter})`;
-
-    const mouth = mouthPoint();
-    const dx = (flyX + fly.offsetWidth * 0.48) - mouth.x;
-    const dy = (flyY + fly.offsetHeight * 0.55) - mouth.y;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-
-    if (dist < 170 && Math.random() < 0.06){
-      eatFly();
-    }
+  if (dist < 170 && Math.random() < 0.06) {
+    eatFly();
   }
 
   requestAnimationFrame(animateFly);
