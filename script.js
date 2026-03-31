@@ -2,6 +2,7 @@ const scene = document.getElementById('scene');
 const skyImage = document.getElementById('skyImage');
 const rainLayer = document.getElementById('rainLayer');
 const fly = document.getElementById('fly');
+const yumBubble = document.getElementById('yumBubble');
 
 const WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&timezone=Europe%2FLisbon';
@@ -146,6 +147,23 @@ function setTargetInArea(area) {
   flyTargetY = random(area.minY, area.maxY);
 }
 
+function showYumBubble() {
+  if (!yumBubble) return;
+
+  yumBubble.style.left = `${window.innerWidth * 0.52}px`;
+  yumBubble.style.top = `${window.innerHeight * 0.43}px`;
+  yumBubble.classList.add('show');
+
+  setTimeout(() => {
+    yumBubble.classList.remove('show');
+  }, 1200);
+}
+
+function hideYumBubble() {
+  if (!yumBubble) return;
+  yumBubble.classList.remove('show');
+}
+
 function startFlyLoop(now) {
   flyState = 'entering-left';
   fly.style.opacity = '1';
@@ -166,6 +184,7 @@ function resetFlyWaiting(now) {
   flyNextStartDelay = getRandomLoopDelay();
   hoverStartedAt = 0;
   sideSwitchAt = 0;
+  hideYumBubble();
 }
 
 function moveTowardsTarget(speedXFactor, speedYFactor, extraX = 0) {
@@ -246,12 +265,18 @@ function animateFly(now) {
     const mouth = getMouthPoint();
     const dx = mouth.x - flyX;
     const dy = mouth.y - flyY;
-
+  
     flyX += dx * 0.14;
     flyY += dy * 0.14;
-
+  
     if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
-      resetFlyWaiting(now);
+      flyState = 'digesting';
+      fly.style.opacity = '0';
+      showYumBubble();
+  
+      setTimeout(() => {
+        resetFlyWaiting(performance.now());
+      }, 1200);
     }
   }
 
