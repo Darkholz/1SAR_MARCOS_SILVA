@@ -47,6 +47,22 @@ body{
   opacity:0.55;
 }
 
+.fly{
+  position:absolute;
+  width:42px;
+  height:auto;
+  left:-100px;
+  top:30vh;
+  z-index:8;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  opacity:0;
+  transform-origin:center center;
+  will-change:left, top, transform, opacity;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,0.18));
+}
+
 .weather-fog-layer{
   position:absolute;
   inset:0;
