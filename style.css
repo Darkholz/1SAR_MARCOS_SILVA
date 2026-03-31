@@ -302,6 +302,8 @@ body{
   transform:translateX(-50%);
   width:min(32vw, 420px);
   height:min(22vw, 260px);
+  overflow:visible;
+  z-index:20;
 }
 .frog{
   position:absolute;
@@ -314,7 +316,9 @@ body{
   animation:frogBreath 4.2s ease-in-out infinite;
   user-select:none;
   -webkit-user-drag:none;
+  z-index:2;
 }
+
 @keyframes frogBreath{
   0%,100%{ transform:translateX(-50%) translateY(0) scale(1); }
   50%{ transform:translateX(-50%) translateY(-2px) scale(1.01); }
@@ -343,7 +347,10 @@ body{
   transform-origin:left center;
   opacity:0;
   box-shadow:0 2px 8px rgba(0,0,0,0.16);
+  z-index:3;
+  pointer-events:none;
 }
+
 .tongue::after{
   content:"";
   position:absolute;
@@ -355,7 +362,6 @@ body{
   border-radius:50%;
   transform:translateY(-50%);
 }
-
 @media (max-width: 900px){
   .lilypad{ width:min(56vw, 430px); bottom:15vh; }
   .frog-zone{ width:min(44vw, 320px); height:min(28vw, 210px); bottom:19vh; }
