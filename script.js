@@ -207,11 +207,11 @@ function animateFly(now) {
     const mouth = getMouthPoint();
     const dx = mouth.x - flyX;
     const dy = mouth.y - flyY;
-
+  
     flyX += dx * 0.14;
     flyY += dy * 0.14;
-
-    if (Math.abs(dx) < 6 && Math.abs(dy) < 6) {
+  
+    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
       resetFlyWaiting(now);
     }
   }
