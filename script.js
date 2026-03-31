@@ -6,7 +6,7 @@ const fly = document.getElementById('fly');
 const WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&timezone=Europe%2FLisbon';
 
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutos
+const REFRESH_INTERVAL = 5 * 60 * 1000;
 
 let currentSkySrc = '';
 
@@ -16,9 +16,12 @@ let flyY = window.innerHeight * 0.32;
 let flyTargetX = 0;
 let flyTargetY = 0;
 let flyAnglePhase = 0;
-let flyLoopStart = 0;
+
+let flyCaughtAt = performance.now();
 let flyNextStartDelay = getRandomDelay();
-let flyCaughtAt = 0;
+let hoverStartedAt = 0;
+
+let pondReady = false;
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
@@ -51,12 +54,9 @@ function getCloudGroupFromWeatherCode(code) {
   if (code === 3) return 'ovc';
 
   if ([45, 48].includes(code)) return 'ovc';
-
   if ([51, 53, 55, 56, 57].includes(code)) return 'bkn';
   if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'bkn';
-
   if ([71, 73, 75, 77, 85, 86].includes(code)) return 'bkn';
-
   if ([95, 96, 99].includes(code)) return 'ovc';
 
   return 'few';
@@ -126,23 +126,23 @@ function getMouthPoint() {
 
 function getHoverArea() {
   return {
-    minX: window.innerWidth * 0.56,
-    maxX: window.innerWidth * 0.77,
+    minX: window.innerWidth * 0.57,
+    maxX: window.innerWidth * 0.72,
     minY: window.innerHeight * 0.34,
-    maxY: window.innerHeight * 0.57
+    maxY: window.innerHeight * 0.50
   };
 }
 
-function startFlyLoop() {
+function startFlyLoop(now) {
   flyState = 'entering';
-  flyLoopStart = performance.now();
   fly.style.opacity = '1';
-  flyX = -80;
-  flyY = window.innerHeight * random(0.28, 0.42);
+  flyX = -40;
+  flyY = window.innerHeight * random(0.30, 0.40);
 
   const area = getHoverArea();
   flyTargetX = random(area.minX, area.maxX);
   flyTargetY = random(area.minY, area.maxY);
+  hoverStartedAt = 0;
 }
 
 function setNewHoverTarget() {
@@ -156,17 +156,17 @@ function resetFlyWaiting(now) {
   fly.style.opacity = '0';
   flyX = -100;
   flyY = window.innerHeight * 0.32;
-  flyNextStartDelay = getRandomDelay();
   flyCaughtAt = now;
+  flyNextStartDelay = getRandomDelay();
+  hoverStartedAt = 0;
 }
 
 function animateFly(now) {
-  if (!fly) return;
+  if (!fly || !pondReady) return;
 
   if (flyState === 'waiting') {
-    if (!flyCaughtAt) flyCaughtAt = now;
     if (now - flyCaughtAt >= flyNextStartDelay) {
-      startFlyLoop();
+      startFlyLoop(now);
     }
   }
 
@@ -174,11 +174,12 @@ function animateFly(now) {
     const dx = flyTargetX - flyX;
     const dy = flyTargetY - flyY;
 
-    flyX += dx * 0.025 + 1.2;
-    flyY += dy * 0.04;
+    flyX += dx * 0.03 + 0.8;
+    flyY += dy * 0.05;
 
-    if (Math.abs(dx) < 16 && Math.abs(dy) < 16) {
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
       flyState = 'hovering';
+      hoverStartedAt = now;
       setNewHoverTarget();
     }
   }
@@ -187,20 +188,19 @@ function animateFly(now) {
     const dx = flyTargetX - flyX;
     const dy = flyTargetY - flyY;
 
-    flyX += dx * 0.03;
-    flyY += dy * 0.03;
+    flyX += dx * 0.025;
+    flyY += dy * 0.025;
 
-    flyAnglePhase += 0.08;
+    flyAnglePhase += 0.1;
 
-    flyX += Math.sin(flyAnglePhase * 1.3) * 0.8;
-    flyY += Math.cos(flyAnglePhase * 1.7) * 0.6;
+    flyX += Math.sin(flyAnglePhase * 1.7) * 0.7;
+    flyY += Math.cos(flyAnglePhase * 2.1) * 0.5;
 
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
       setNewHoverTarget();
     }
 
-    const hoverDuration = now - flyLoopStart;
-    if (hoverDuration > random(5000, 9000)) {
+    if (hoverStartedAt && now - hoverStartedAt > random(5000, 9000)) {
       flyState = 'caught';
     }
   }
@@ -236,6 +236,19 @@ window.addEventListener('resize', () => {
     flyY = window.innerHeight * 0.32;
   }
 });
+
+const pondScene = document.getElementById('pondScene');
+if (pondScene) {
+  if (pondScene.complete) {
+    pondReady = true;
+    flyCaughtAt = performance.now();
+  } else {
+    pondScene.addEventListener('load', () => {
+      pondReady = true;
+      flyCaughtAt = performance.now();
+    });
+  }
+}
 
 applyLiveWeather();
 setInterval(applyLiveWeather, REFRESH_INTERVAL);
