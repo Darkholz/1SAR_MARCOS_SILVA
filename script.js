@@ -151,7 +151,7 @@ function showYumBubble() {
   if (!yumBubble) return;
 
   yumBubble.style.left = `${window.innerWidth * 0.52}px`;
-  yumBubble.style.top = `${window.innerHeight * 0.43}px`;
+  yumBubble.style.top = `${window.innerHeight * 0.62}px`;
   yumBubble.classList.add('show');
 
   setTimeout(() => {
