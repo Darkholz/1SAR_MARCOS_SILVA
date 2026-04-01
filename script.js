@@ -156,10 +156,7 @@ async function playTongueCatch() {
   const isMobile = window.innerWidth <= 640;
 
   if (isMobile) {
-    setTongueFrame('tongue_2.png?v=tongue1');
-    await wait(45);
-
-    setTongueFrame('tongue_1.png?v=tongue1');
+    setTongueFrame('tongue_3.png?v=tongue1');
     await wait(70);
   } else {
     setTongueFrame('tongue_3.png?v=tongue1');
@@ -195,8 +192,8 @@ function getTongueBasePoint() {
 
   if (isMobile) {
     return {
-      x: rect.left + rect.width * 0.60,
-      y: rect.top + rect.height * 0.69
+      x: rect.left + rect.width * 0.8,
+      y: rect.top + rect.height * 0.67
     };
   }
 
@@ -212,7 +209,7 @@ function getTongueTipPoint() {
 
   if (isMobile) {
     return {
-      x: rect.left + rect.width * 0.56,
+      x: rect.left + rect.width * 0.8,
       y: rect.top + rect.height * 0.64
     };
   }
@@ -226,6 +223,14 @@ function getTongueTipPoint() {
 
 function getPreCatchPoint() {
   const rect = getPondRect();
+  const isMobile = window.innerWidth <= 640;
+
+  if (isMobile) {
+    return {
+      x: rect.left + rect.width * 0.6,
+      y: rect.top + rect.height * 0.52
+    };
+  }
 
   return {
     x: rect.left + rect.width * 0.57,
@@ -268,6 +273,16 @@ function getLeftHoverArea() {
 
 function getRightHoverArea() {
   const rect = getPondRect();
+  const isMobile = window.innerWidth <= 640;
+
+  if (isMobile) {
+    return {
+      minX: rect.left + rect.width * 0.68,
+      maxX: rect.left + rect.width * 0.75,
+      minY: rect.top + rect.height * 0.40,
+      maxY: rect.top + rect.height * 0.60
+    };
+  }
 
   return {
     minX: rect.left + rect.width * 0.56,
@@ -415,21 +430,31 @@ function animateFly(now) {
     const flyHalfW = fly.offsetWidth * 0.5;
     const flyHalfH = fly.offsetHeight * 0.5;
 
-    const targetX = tongueTip.x - flyHalfW;
-    const targetY = tongueTip.y - flyHalfH;
+    let catchOffsetX = 0;
+    let catchOffsetY = 0;
+
+    if (window.innerWidth <= 640) {
+      catchOffsetX = 18;
+      catchOffsetY = -18;
+    }
+
+    const targetX = tongueTip.x - flyHalfW + catchOffsetX;
+    const targetY = tongueTip.y - flyHalfH + catchOffsetY;
 
     const dx = targetX - flyX;
     const dy = targetY - flyY;
 
-    flyX += dx * 0.22;
-    flyY += dy * 0.22;
+    flyX += dx * 0.30;
+    flyY += dy * 0.30;
 
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
       flyState = 'digesting';
 
+      fly.style.left = `${targetX}px`;
+      fly.style.top = `${targetY}px`;
+      fly.style.transform = `rotate(0deg) scale(0.85)`;
+
       playTongueCatch().then(() => {
-        fly.style.left = `${targetX}px`;
-        fly.style.top = `${targetY}px`;
         fly.style.opacity = '0';
         showYumBubble();
 
