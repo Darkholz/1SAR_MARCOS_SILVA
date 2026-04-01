@@ -135,11 +135,14 @@ function hideTongueFrame() {
 
 function getScreenProfile() {
   const w = window.innerWidth;
+  const h = window.innerHeight;
 
   if (w <= 640) return 'mobile';
   if (w <= 1280) return 'desktop-small';
   if (w <= 1600) return 'desktop-medium';
-  return 'desktop-large';
+
+  if (h < 1000) return 'desktop-large-short';
+  return 'desktop-large-tall';
 }
 
 function getTongueFrameOffsets(src) {
@@ -161,10 +164,15 @@ function getTongueFrameOffsets(src) {
       tongue_2: { x: -34, y: 22 },
       tongue_3: { x: -76, y: 30 }
     },
-    'desktop-large': {
-      tongue_1: { x: 6, y: 12 },
-      tongue_2: { x: -42, y: 26 },
-      tongue_3: { x: -92, y: 36 }
+    'desktop-large-short': {
+      tongue_1: { x: 4, y: 6 },
+      tongue_2: { x: -24, y: 14 },
+      tongue_3: { x: -58, y: 18 }
+    },
+    'desktop-large-tall': {
+      tongue_1: { x: 8, y: 14 },
+      tongue_2: { x: -42, y: 28 },
+      tongue_3: { x: -96, y: 40 }
     }
   };
 
@@ -271,18 +279,39 @@ function getMouthPoint() {
 
 function getTongueBasePoint() {
   const rect = getPondRect();
-  const isMobile = window.innerWidth <= 640;
+  const profile = getScreenProfile();
 
-  if (isMobile) {
+  if (profile === 'mobile') {
     return {
-      x: rect.left + rect.width * 0.8,
+      x: rect.left + rect.width * 0.80,
       y: rect.top + rect.height * 0.67
     };
   }
 
+  if (profile === 'desktop-small') {
+    return {
+      x: rect.left + rect.width * 0.66,
+      y: rect.top + rect.height * 0.72
+    };
+  }
+
+  if (profile === 'desktop-medium') {
+    return {
+      x: rect.left + rect.width * 0.65,
+      y: rect.top + rect.height * 0.73
+    };
+  }
+
+  if (profile === 'desktop-large-short') {
+    return {
+      x: rect.left + rect.width * 0.645,
+      y: rect.top + rect.height * 0.705
+    };
+  }
+
   return {
-    x: rect.left + rect.width * 0.65,
-    y: rect.top + rect.height * 0.73
+    x: rect.left + rect.width * 0.655,
+    y: rect.top + rect.height * 0.745
   };
 }
 
@@ -589,42 +618,6 @@ function waitForImage(img) {
   });
 }
 
-function showDebugOverlay() {
-  const existing = document.getElementById('debugOverlay');
-  if (existing) existing.remove();
-
-  const rect = getPondRect();
-  const overlay = document.createElement('div');
-  overlay.id = 'debugOverlay';
-
-  overlay.style.position = 'fixed';
-  overlay.style.left = '12px';
-  overlay.style.top = '12px';
-  overlay.style.zIndex = '999999';
-  overlay.style.background = 'rgba(0, 0, 0, 0.75)';
-  overlay.style.color = '#fff';
-  overlay.style.padding = '10px 12px';
-  overlay.style.borderRadius = '10px';
-  overlay.style.fontSize = '14px';
-  overlay.style.lineHeight = '1.4';
-  overlay.style.fontFamily = 'Arial, Helvetica, sans-serif';
-  overlay.style.pointerEvents = 'none';
-  overlay.style.whiteSpace = 'pre-line';
-
-  overlay.textContent = [
-    `window.innerWidth: ${window.innerWidth}`,
-    `window.innerHeight: ${window.innerHeight}`,
-    `devicePixelRatio: ${window.devicePixelRatio}`,
-    `screen.width: ${window.screen.width}`,
-    `screen.height: ${window.screen.height}`,
-    `screen profile: ${getScreenProfile()}`,
-    `pond width: ${Math.round(rect.width)}`,
-    `pond height: ${Math.round(rect.height)}`
-  ].join('\n');
-
-  document.body.appendChild(overlay);
-}
-
 async function initScene() {
   await applyLiveWeather();
 
@@ -638,16 +631,12 @@ async function initScene() {
 
   await waitForImage(skyImage);
   skyImage.classList.add('loaded');
-
-  showDebugOverlay();
 }
 
 window.addEventListener('resize', () => {
   if (flyState === 'waiting') {
     flyY = window.innerHeight * 0.32;
   }
-
-  showDebugOverlay();
 });
 
 setInterval(applyLiveWeather, REFRESH_INTERVAL);
