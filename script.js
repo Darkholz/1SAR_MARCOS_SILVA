@@ -75,7 +75,7 @@ function shouldShowRain(code) {
 
 function getSkyImageName(isDay, cloudGroup) {
   const prefix = isDay ? 'day' : 'night';
-  return `${prefix}_${cloudGroup}.png?v=16`;
+  return `${prefix}_${cloudGroup}.png?`;
 }
 
 function applyVisualState(weatherCode, isDay) {
@@ -112,7 +112,7 @@ async function applyLiveWeather() {
     applyVisualState(weatherCode, isDay);
   } catch (error) {
     if (!currentSkySrc) {
-      currentSkySrc = 'day_few.png?v=16';
+      currentSkySrc = 'day_few.png?';
       skyImage.src = currentSkySrc;
     }
 
@@ -127,6 +127,22 @@ function getMouthPoint() {
   };
 }
 
+function getPreCatchPoint() {
+  const isMobile = window.innerWidth <= 640;
+
+  if (isMobile) {
+    return {
+      x: window.innerWidth * 0.60,
+      y: window.innerHeight * 0.63
+    };
+  }
+
+  return {
+    x: window.innerWidth * 0.57,
+    y: window.innerHeight * 0.60
+  };
+}
+
 function showYumBubble() {
   if (!yumBubble) return;
 
@@ -135,7 +151,7 @@ function showYumBubble() {
   yumBubble.style.left = `${window.innerWidth * 0.52}px`;
   yumBubble.style.top = isMobile
     ? `${window.innerHeight * 0.68}px`
-    : `${window.innerHeight * 0.62}px`;
+    : `${window.innerHeight * 0.64}px`;
 
   yumBubble.classList.add('show');
 
@@ -207,6 +223,7 @@ function startFlyLoop(now) {
   setTargetInArea(getLeftHoverArea());
   hoverStartedAt = 0;
   sideSwitchAt = 0;
+  preCatchStartedAt = 0;
   flyWaitingSince = now;
 }
 
@@ -219,6 +236,7 @@ function resetFlyWaiting(now) {
   flyNextStartDelay = getRandomLoopDelay();
   hoverStartedAt = 0;
   sideSwitchAt = 0;
+  preCatchStartedAt = 0;
   hideYumBubble();
 }
 
@@ -286,29 +304,52 @@ function animateFly(now) {
   if (flyState === 'hovering-right') {
     const { dx, dy } = moveTowardsTarget(0.025, 0.025);
     applyNaturalWobble();
-
+  
     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
       setTargetInArea(getRightHoverArea());
     }
-
+  
     if (hoverStartedAt && now - hoverStartedAt > random(5000, 9000)) {
+      const preCatch = getPreCatchPoint();
+      flyTargetX = preCatch.x;
+      flyTargetY = preCatch.y;
+      flyState = 'pre-catch';
+      preCatchStartedAt = now;
+    }
+  }
+  
+  if (flyState === 'pre-catch') {
+    const dx = flyTargetX - flyX;
+    const dy = flyTargetY - flyY;
+  
+    flyX += dx * 0.045;
+    flyY += dy * 0.045;
+  
+    flyAnglePhase += 0.08;
+    flyX += Math.sin(flyAnglePhase * 1.4) * 0.35;
+    flyY += Math.cos(flyAnglePhase * 1.8) * 0.25;
+  
+    if (
+      (Math.abs(dx) < 6 && Math.abs(dy) < 6) ||
+      (preCatchStartedAt && now - preCatchStartedAt > 1200)
+    ) {
       flyState = 'caught';
     }
   }
-
+  
   if (flyState === 'caught') {
     const mouth = getMouthPoint();
     const dx = mouth.x - flyX;
     const dy = mouth.y - flyY;
-
-    flyX += dx * 0.14;
-    flyY += dy * 0.14;
-
+  
+    flyX += dx * 0.18;
+    flyY += dy * 0.18;
+  
     if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
       flyState = 'digesting';
       fly.style.opacity = '0';
       showYumBubble();
-
+  
       setTimeout(() => {
         resetFlyWaiting(performance.now());
       }, 1200);
