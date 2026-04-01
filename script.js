@@ -4,6 +4,7 @@ const rainLayer = document.getElementById('rainLayer');
 const fly = document.getElementById('fly');
 const pondScene = document.getElementById('pondScene');
 const yumBubble = document.getElementById('yumBubble');
+const tongueFrame = document.getElementById('tongueFrame');
 
 const WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&timezone=Europe%2FLisbon';
@@ -25,6 +26,7 @@ let hoverStartedAt = 0;
 let sideSwitchAt = 0;
 
 let assetsReady = false;
+let tongueAnimating = false;
 
 function random(min, max) {
   return Math.random() * (max - min) + min;
@@ -120,11 +122,71 @@ async function applyLiveWeather() {
   }
 }
 
+
 function getMouthPoint() {
   return {
     x: window.innerWidth * 0.505,
     y: window.innerHeight * 0.67
   };
+}
+
+function getTongueBasePoint() {
+  const isMobile = window.innerWidth <= 640;
+
+  if (isMobile) {
+    return {
+      x: window.innerWidth * 0.56,
+      y: window.innerHeight * 0.675
+    };
+  }
+
+  return {
+    x: window.innerWidth * 0.535,
+    y: window.innerHeight * 0.61
+  };
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function hideTongueFrame() {
+  if (!tongueFrame) return;
+  tongueFrame.style.opacity = '0';
+}
+
+function setTongueFrame(src) {
+  if (!tongueFrame) return;
+
+  const base = getTongueBasePoint();
+  tongueFrame.src = src;
+
+  requestAnimationFrame(() => {
+    const width = tongueFrame.naturalWidth || tongueFrame.width || 120;
+    const height = tongueFrame.naturalHeight || tongueFrame.height || 40;
+
+    tongueFrame.style.left = `${base.x - width + 6}px`;
+    tongueFrame.style.top = `${base.y - height * 0.72}px`;
+    tongueFrame.style.opacity = '1';
+  });
+}
+
+async function playTongueCatch() {
+  if (!tongueFrame || tongueAnimating) return;
+
+  tongueAnimating = true;
+
+  setTongueFrame('3.png?v=tongue1');
+  await wait(45);
+
+  setTongueFrame('2.png?v=tongue1');
+  await wait(45);
+
+  setTongueFrame('1.png?v=tongue1');
+  await wait(70);
+
+  hideTongueFrame();
+  tongueAnimating = false;
 }
 
 function getPreCatchPoint() {
@@ -238,6 +300,7 @@ function resetFlyWaiting(now) {
   sideSwitchAt = 0;
   preCatchStartedAt = 0;
   hideYumBubble();
+  hideTongueFrame();
 }
 
 function moveTowardsTarget(speedXFactor, speedYFactor, extraX = 0) {
@@ -345,14 +408,17 @@ function animateFly(now) {
     flyX += dx * 0.18;
     flyY += dy * 0.18;
   
-    if (Math.abs(dx) < 2 && Math.abs(dy) < 2) {
+    if (Math.abs(dx) < 14 && Math.abs(dy) < 14) {
       flyState = 'digesting';
-      fly.style.opacity = '0';
-      showYumBubble();
   
-      setTimeout(() => {
-        resetFlyWaiting(performance.now());
-      }, 1200);
+      playTongueCatch().then(() => {
+        fly.style.opacity = '0';
+        showYumBubble();
+  
+        setTimeout(() => {
+          resetFlyWaiting(performance.now());
+        }, 1200);
+      });
     }
   }
 
