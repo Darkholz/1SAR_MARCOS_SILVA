@@ -315,7 +315,7 @@ function getTongueBasePoint() {
 
   if (profile === 'desktop-large-short') {
     return {
-      x: rect.left + rect.width * 0.63,
+      x: rect.left + rect.width * 0.615,
       y: rect.top + rect.height * 0.72
     };
   }
