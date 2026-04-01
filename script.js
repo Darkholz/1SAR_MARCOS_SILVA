@@ -133,19 +133,85 @@ function hideTongueFrame() {
   tongueFrame.style.opacity = '0';
 }
 
-function setTongueFrame(src) {
+function getScreenProfile() {
+  const w = window.innerWidth;
+
+  if (w <= 640) return 'mobile';
+  if (w <= 1280) return 'desktop-small';
+  if (w <= 1600) return 'desktop-medium';
+  return 'desktop-large';
+}
+
+function getTongueFrameOffsets(src) {
+  const profile = getScreenProfile();
+
+  const offsets = {
+    mobile: {
+      tongue_1: { x: 2, y: 10 },
+      tongue_2: { x: -34, y: 22 },
+      tongue_3: { x: 10, y: 6 }
+    },
+    'desktop-small': {
+      tongue_1: { x: 0, y: 8 },
+      tongue_2: { x: -24, y: 18 },
+      tongue_3: { x: -48, y: 22 }
+    },
+    'desktop-medium': {
+      tongue_1: { x: 2, y: 10 },
+      tongue_2: { x: -34, y: 22 },
+      tongue_3: { x: -76, y: 30 }
+    },
+    'desktop-large': {
+      tongue_1: { x: 6, y: 12 },
+      tongue_2: { x: -42, y: 26 },
+      tongue_3: { x: -92, y: 36 }
+    }
+  };
+
+  let frame = 'tongue_3';
+
+  if (src.includes('tongue_1')) {
+    frame = 'tongue_1';
+  } else if (src.includes('tongue_2')) {
+    frame = 'tongue_2';
+  }
+
+  return offsets[profile][frame];
+}
+
+async function setTongueFrame(src) {
   if (!tongueFrame) return;
 
   const base = getTongueBasePoint();
-  tongueFrame.src = src;
 
-  requestAnimationFrame(() => {
-    const width = tongueFrame.naturalWidth || tongueFrame.width || 120;
-    const height = tongueFrame.naturalHeight || tongueFrame.height || 40;
+  await new Promise((resolve) => {
+    const finalize = () => {
+      requestAnimationFrame(() => {
+        const width = tongueFrame.naturalWidth || tongueFrame.width || 120;
+        const height = tongueFrame.naturalHeight || tongueFrame.height || 40;
 
-    tongueFrame.style.left = `${base.x - width + 6}px`;
-    tongueFrame.style.top = `${base.y - height * 0.72}px`;
-    tongueFrame.style.opacity = '1';
+        const frameOffset = getTongueFrameOffsets(src);
+
+        tongueFrame.style.left = `${base.x - width + frameOffset.x}px`;
+        tongueFrame.style.top = `${base.y - height * 0.72 + frameOffset.y}px`;
+        tongueFrame.style.opacity = '1';
+
+        resolve();
+      });
+    };
+
+    if (
+      tongueFrame.getAttribute('src') === src &&
+      tongueFrame.complete &&
+      tongueFrame.naturalWidth > 0
+    ) {
+      finalize();
+      return;
+    }
+
+    tongueFrame.onload = finalize;
+    tongueFrame.onerror = finalize;
+    tongueFrame.src = src;
   });
 }
 
@@ -156,17 +222,23 @@ async function playTongueCatch() {
   const isMobile = window.innerWidth <= 640;
 
   if (isMobile) {
-    setTongueFrame('tongue_3.png?v=tongue1');
-    await wait(70);
+    setTongueFrame('tongue_3.png');
+    await wait(50);
   } else {
-    setTongueFrame('tongue_3.png?v=tongue1');
-    await wait(45);
+    setTongueFrame('tongue_3.png');
+    await wait(25);
 
-    setTongueFrame('tongue_2.png?v=tongue1');
-    await wait(45);
+    setTongueFrame('tongue_2.png');
+    await wait(25);
 
-    setTongueFrame('tongue_1.png?v=tongue1');
-    await wait(70);
+    setTongueFrame('tongue_1.png');
+    await wait(30);
+
+    setTongueFrame('tongue_2.png');
+    await wait(25);
+
+    setTongueFrame('tongue_3.png');
+    await wait(25);
   }
 
   hideTongueFrame();
@@ -216,7 +288,7 @@ function getTongueTipPoint() {
 
   return {
     x: rect.left + rect.width * 0.65,
-    y: rect.top + rect.height * 0.62
+    y: rect.top + rect.height * 0.68
   };
 }
 
