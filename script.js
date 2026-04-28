@@ -9,8 +9,7 @@ const tongueFrame = document.getElementById('tongueFrame');
 const WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast?latitude=38.0151&longitude=-7.8632&current=weather_code,is_day&daily=sunrise,sunset&timezone=Europe%2FLisbon';
 
-const METAR_URL =
-  'https://aviationweather.gov/api/data/metar?ids=LPBJ&format=json';
+const METAR_URL = '/api/metar';
 
 const REFRESH_INTERVAL = 5 * 60 * 1000;
 
